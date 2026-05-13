@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#000000">
+    <title>Zapisi Transactions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        --app-bg: #f5f5f7;
+        --shell-bg: #ffffff;
+        --panel-bg: #ffffff;
+        --panel-muted: #f5f5f7;
+        --panel-strong: #1d1d1f;
+        --text: #1d1d1f;
+        --text-secondary: #6e6e6e;
+        --text-inverse: #f5f5f7;
+        --border: #d2d2d7;
+        --border-strong: #86868b;
+        --accent: #0071e3;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      }
+
+      html[data-theme="dark"] {
+        --app-bg: #000000;
+        --shell-bg: #0c0c0d;
+        --panel-bg: #1d1d1f;
+        --panel-muted: #272729;
+        --panel-strong: #f5f5f7;
+        --text: #f5f5f7;
+        --text-secondary: #a1a1a6;
+        --text-inverse: #1d1d1f;
+        --border: #424245;
+        --border-strong: #6e6e73;
+        --accent: #2997ff;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        color-scheme: light;
+      }
+
+      html[data-theme="dark"] {
+        color-scheme: dark;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--app-bg);
+        color: var(--text);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+          "Helvetica Neue", Helvetica, Arial, sans-serif;
+      }
+
+      .app-shell {
+        background: var(--shell-bg);
+        border: 1px solid var(--border);
+        border-radius: 36px;
+        box-shadow: var(--shadow);
+      }
+
+      .surface-card {
+        background: var(--panel-bg);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+      }
+
+      .surface-muted {
+        background: var(--panel-muted);
+      }
+
+      .ios-select,
+      .ios-field,
+      .ios-textarea {
+        width: 100%;
+        border-radius: 16px;
+        border: 1px solid var(--border-strong);
+        background: var(--panel-bg);
+        color: var(--text);
+        padding: 12px 14px;
+        font: inherit;
+        outline: 0;
+      }
+
+      .ios-select:focus,
+      .ios-field:focus,
+      .ios-textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+      }
+
+      .ios-chip {
+        background: var(--panel-muted);
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+
+      .ios-button {
+        border: 0;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #ffffff;
+        padding: 12px 18px;
+        font: inherit;
+        font-weight: 600;
+      }
+
+      .bottom-nav {
+        background: color-mix(in srgb, var(--shell-bg) 90%, transparent);
+        border: 1px solid var(--border);
+        backdrop-filter: blur(18px);
+      }
+
+      .modal-backdrop {
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(14px);
+      }
+
+      .desktop-nav {
+        display: none;
+      }
+
+      .record-badge {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      .desktop-records-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      @media (min-width: 1024px) {
+        body {
+          padding: 24px;
+        }
+
+        .app-frame {
+          max-width: 1320px;
+          padding: 0;
+        }
+
+        .app-shell {
+          min-height: calc(100vh - 48px);
+          border-radius: 40px;
+          padding: 28px;
+        }
+
+        .desktop-nav {
+          display: flex;
+        }
+
+        .desktop-nav-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          border-radius: 999px;
+          padding: 10px 16px;
+          color: var(--text-secondary);
+          text-decoration: none;
+          transition: background-color 180ms ease, color 180ms ease;
+        }
+
+        .desktop-nav-link.is-active {
+          background: var(--panel-muted);
+          color: var(--text);
+        }
+
+        .desktop-records-grid {
+          display: grid;
+          grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
+          gap: 20px;
+          align-items: start;
+        }
+
+        .desktop-sidebar {
+          position: sticky;
+          top: 28px;
+        }
+
+        .desktop-record-list {
+          gap: 16px;
+        }
+
+        .desktop-modal {
+          max-width: 720px;
+          align-items: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-frame mx-auto min-h-screen max-w-[460px] px-3 pb-32 pt-3 sm:px-4 sm:pt-4 lg:max-w-[1320px] lg:pb-0 lg:pt-0">
+      <div class="app-shell min-h-[calc(100vh-24px)] px-4 pb-28 pt-4 sm:min-h-[calc(100vh-32px)] sm:px-5 lg:pb-8">
+        <header class="flex items-center justify-between gap-3">
+          <label class="ios-chip flex min-w-0 items-center gap-3 rounded-[18px] px-3 py-2.5">
+            <span id="accountInitials" class="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-[var(--panel-strong)] text-sm font-semibold text-[var(--text-inverse)]">AL</span>
+            <select id="accountSelector" class="ios-select min-w-0 border-0 bg-transparent p-0 pr-6 text-sm font-medium text-[var(--text)] shadow-none focus:shadow-none">
+              <option value="all">All Accounts</option>
+            </select>
+          </label>
+
+          <div class="min-w-0 flex-1 text-center">
+            <p class="truncate text-[12px] font-medium tracking-[0.12em] text-[var(--text-secondary)]">Zapisi</p>
+            <h1 class="mt-1 truncate text-[20px] font-semibold tracking-[-0.02em]">Transactions</h1>
+          </div>
+
+          <button id="themeToggle" type="button" class="ios-chip grid h-11 w-11 shrink-0 place-items-center rounded-full" aria-label="Toggle dark or light mode">
+            <svg id="themeIconSun" viewBox="0 0 24 24" class="hidden h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path d="M12 2.5v2.2M12 19.3v2.2M4.7 4.7l1.6 1.6M17.7 17.7l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.7 19.3l1.6-1.6M17.7 6.3l1.6-1.6" stroke-linecap="round"></path>
+            </svg>
+            <svg id="themeIconMoon" viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor">
+              <path d="M19.2 15.35A8.75 8.75 0 0 1 8.65 4.8 8.76 8.76 0 1 0 19.2 15.35Z"></path>
+            </svg>
+          </button>
+        </header>
+
+        <div class="desktop-nav mt-5 items-center justify-between gap-4">
+          <nav class="flex items-center gap-2">
+            <a href="/" class="desktop-nav-link">
+              <span>Overview</span>
+            </a>
+            <a href="/records" class="desktop-nav-link is-active">
+              <span>Transactions</span>
+            </a>
+          </nav>
+        </div>
+
+        <main class="mt-5">
+          <div class="desktop-records-grid">
+            <aside class="desktop-sidebar">
+              <section class="surface-card p-4 lg:p-5">
+            <div class="flex items-center gap-3">
+              <label class="min-w-0 flex-1">
+                <span class="mb-2 block text-[12px] font-medium text-[var(--text-secondary)]">Transaction type</span>
+                <select id="filterType" class="ios-select">
+                  <option value="all">All types</option>
+                  <option value="expense">Debit only</option>
+                  <option value="income">Credit only</option>
+                </select>
+              </label>
+              <div class="surface-muted rounded-[18px] px-4 py-4 text-center">
+                <p class="text-[12px] text-[var(--text-secondary)]">Shown</p>
+                <p id="recordCount" class="mt-1 text-[24px] font-semibold tracking-[-0.03em]">0</p>
+              </div>
+            </div>
+          </section>
+            </aside>
+
+            <section id="recordsList" class="desktop-record-list flex flex-col gap-3"></section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <button id="openModal" type="button" class="fixed bottom-24 right-12 z-30 grid h-[60px] w-[60px] place-items-center rounded-full bg-[var(--panel-strong)] text-[var(--text-inverse)] shadow-[0_10px_24px_rgba(0,0,0,0.24)] lg:bottom-6 lg:left-1/2 lg:right-auto lg:-translate-x-1/2" aria-label="Add transaction">
+      <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 5v14M5 12h14" stroke-linecap="round"></path>
+      </svg>
+    </button>
+
+    <nav class="bottom-nav fixed bottom-4 left-1/2 z-20 flex w-[calc(100%-1.5rem)] max-w-[428px] -translate-x-1/2 items-center justify-between rounded-[22px] px-6 py-3 lg:max-w-[560px]">
+      <a href="/" class="flex flex-1 flex-col items-center gap-1 text-[var(--text-secondary)]">
+        <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"></path>
+          <circle cx="12" cy="12" r="2.8" fill="currentColor" stroke="none"></circle>
+        </svg>
+        <span class="text-[12px] font-medium">Home</span>
+      </a>
+      <a href="/records" class="flex flex-1 flex-col items-center gap-1 text-[var(--accent)]">
+        <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M7 4.5h10a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2Z"></path>
+          <path d="M8.5 9.5h7M8.5 13h7M8.5 16.5h5"></path>
+        </svg>
+        <span class="text-[12px] font-medium">Transactions</span>
+      </a>
+    </nav>
+
+    <div id="modalOverlay" class="modal-backdrop fixed inset-0 z-40 hidden px-3 py-4">
+      <div class="desktop-modal mx-auto flex min-h-full max-w-[460px] items-end">
+        <div class="surface-card flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-[28px] p-4 sm:p-5">
+          <div class="flex shrink-0 items-center justify-between">
+            <div>
+              <p class="text-[12px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">New transaction</p>
+              <h2 class="mt-1 text-[24px] font-semibold tracking-[-0.03em]">Add entry</h2>
+            </div>
+            <button id="closeModal" type="button" class="ios-chip grid h-10 w-10 place-items-center rounded-full text-[var(--text-secondary)]" aria-label="Close form">
+              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round"></path>
+              </svg>
+            </button>
+          </div>
+
+          <form id="recordForm" class="mt-4 space-y-4 overflow-y-auto pr-1">
+            <label class="block">
+              <span class="mb-2 block text-[12px] font-medium text-[var(--text-secondary)]">Account</span>
+              <select id="modalAccountSelect" class="ios-select"></select>
+            </label>
+
+            <label id="accountCustomWrapper" class="hidden block">
+              <span class="mb-2 block text-[12px] font-medium text-[var(--text-secondary)]">New account name</span>
+              <input id="accountCustomInput" type="text" class="ios-field" placeholder="Personal, household, freelance">
+            </label>
+
+            <div class="grid grid-cols-2 gap-3">
+              <label class="block">
+                <span class="mb-2 block text-[12px] font-medium text-[var(--text-secondary)]">Type</span>
+                <select name="transaction_type" id="transactionTypeSelect" required class="ios-select"></select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-[12px] font-medium text-[var(--text-secondary)]">Amount</span>
+                <input name="amount" type="number" step="0.01" min="0" required class="ios-field" placeholder="0.00">
+              </label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <label class="block">
+                <span class="mb-2 block text-[12px] font-medium text-[var(--text-secondary)]">Payment</span>
+                <select name="payment_mode" id="paymentModeSelect" required class="ios-select"></select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-[12px] font-medium text-[var(--text-secondary)]">Category</span>
+                <select name="category" id="categorySelect" required class="ios-select"></select>
+              </label>
+            </div>
+
+            <label class="block">
+              <span class="mb-2 block text-[12px] font-medium text-[var(--text-secondary)]">Description</span>
+              <textarea name="description" rows="3" required class="ios-textarea" placeholder="Groceries, rent, salary"></textarea>
+            </label>
+
+            <div class="grid grid-cols-2 gap-3">
+              <label class="block">
+                <span class="mb-2 block text-[12px] font-medium text-[var(--text-secondary)]">Receiver</span>
+                <select id="receiverSelect" class="ios-select">
+                  <option value="">None</option>
+                </select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-[12px] font-medium text-[var(--text-secondary)]">Subcategory</span>
+                <input name="subcategory" class="ios-field" placeholder="groceries, produce, essentials">
+              </label>
+            </div>
+
+            <label id="receiverCustomWrapper" class="hidden block">
+              <span class="mb-2 block text-[12px] font-medium text-[var(--text-secondary)]">Custom receiver</span>
+              <input id="receiverCustomInput" type="text" class="ios-field" placeholder="Enter receiver name">
+            </label>
+
+            <details class="surface-muted rounded-[20px] p-4">
+              <summary class="cursor-pointer text-[12px] font-medium uppercase tracking-[0.12em] text-[var(--text-secondary)]">More fields</summary>
+              <div class="mt-4 space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                  <label class="block">
+                    <span class="mb-2 block text-[12px] font-medium text-[var(--text-secondary)]">Created at</span>
+                    <input name="created_at" type="datetime-local" class="ios-field">
+                  </label>
+                  <label class="block">
+                    <span class="mb-2 block text-[12px] font-medium text-[var(--text-secondary)]">Updated at</span>
+                    <input name="updated_at" type="datetime-local" class="ios-field">
+                  </label>
+                </div>
+                <label class="block">
+                  <span class="mb-2 block text-[12px] font-medium text-[var(--text-secondary)]">Currency</span>
+                  <select name="currency" id="currencySelect" class="ios-select"></select>
+                </label>
+                <input name="official_txn_id" class="ios-field" placeholder="Official transaction ID">
+              </div>
+            </details>
+
+            <p id="formStatus" class="hidden rounded-[16px] px-4 py-3 text-sm"></p>
+            <button type="submit" class="ios-button w-full">Save transaction</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const THEME_KEY = 'zapisi-theme'
+      const ACCOUNT_KEY = 'zapisi-account'
+      const MAJOR_CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'CNY', 'AUD', 'CAD', 'CHF', 'SGD', 'AED', 'NZD', 'HKD']
+      const outflowTypes = new Set(['expense'])
+      const inflowTypes = new Set(['income'])
+
+      const themeToggle = document.getElementById('themeToggle')
+      const themeIconSun = document.getElementById('themeIconSun')
+      const themeIconMoon = document.getElementById('themeIconMoon')
+      const accountSelector = document.getElementById('accountSelector')
+      const accountInitials = document.getElementById('accountInitials')
+      const filterType = document.getElementById('filterType')
+      const recordCount = document.getElementById('recordCount')
+      const recordsList = document.getElementById('recordsList')
+      const openModal = document.getElementById('openModal')
+      const closeModal = document.getElementById('closeModal')
+      const modalOverlay = document.getElementById('modalOverlay')
+      const recordForm = document.getElementById('recordForm')
+      const formStatus = document.getElementById('formStatus')
+      const modalAccountSelect = document.getElementById('modalAccountSelect')
+      const accountCustomWrapper = document.getElementById('accountCustomWrapper')
+      const accountCustomInput = document.getElementById('accountCustomInput')
+      const transactionTypeSelect = document.getElementById('transactionTypeSelect')
+      const paymentModeSelect = document.getElementById('paymentModeSelect')
+      const categorySelect = document.getElementById('categorySelect')
+      const receiverSelect = document.getElementById('receiverSelect')
+      const receiverCustomWrapper = document.getElementById('receiverCustomWrapper')
+      const receiverCustomInput = document.getElementById('receiverCustomInput')
+      const currencySelect = document.getElementById('currencySelect')
+
+      let bootstrapData = null
+
+      function titleCase(value) {
+        return String(value).replaceAll('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+      }
+
+      function formatCurrency(value, currency = 'INR') {
+        try {
+          return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency,
+            maximumFractionDigits: 0,
+          }).format(Number(value || 0))
+        } catch {
+          return `${currency} ${Number(value || 0).toFixed(0)}`
+        }
+      }
+
+      function formatDate(value) {
+        return new Intl.DateTimeFormat('en-US', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        }).format(new Date(value))
+      }
+
+      function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme
+        localStorage.setItem(THEME_KEY, theme)
+        themeIconSun.classList.toggle('hidden', theme !== 'dark')
+        themeIconMoon.classList.toggle('hidden', theme === 'dark')
+      }
+
+      function currentTheme() {
+        return localStorage.getItem(THEME_KEY) || 'dark'
+      }
+
+      function isDesktopLayout() {
+        return window.innerWidth >= 1024
+      }
+
+      function localDateTimeValue(date = new Date()) {
+        const adjusted = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+        return adjusted.toISOString().slice(0, 16)
+      }
+
+      function selectedAccount() {
+        return localStorage.getItem(ACCOUNT_KEY) || 'all'
+      }
+
+      function saveSelectedAccount(accountName) {
+        localStorage.setItem(ACCOUNT_KEY, accountName)
+      }
+
+      function accountInitial(name) {
+        if (!name || name === 'all') {
+          return 'AL'
+        }
+        return name
+          .split(/\s+/)
+          .slice(0, 2)
+          .map((part) => part.charAt(0).toUpperCase())
+          .join('')
+      }
+
+      function visibleRecords() {
+        if (!bootstrapData) {
+          return []
+        }
+
+        let records = bootstrapData.records
+        const selected = selectedAccount()
+        if (selected !== 'all') {
+          records = records.filter((record) => record.account_name === selected)
+        }
+
+        if (filterType.value === 'expense') {
+          records = records.filter((record) => outflowTypes.has(record.transaction_type))
+        } else if (filterType.value === 'income') {
+          records = records.filter((record) => inflowTypes.has(record.transaction_type))
+        }
+
+        return records
+      }
+
+      function badgeClass(type) {
+        if (outflowTypes.has(type)) {
+          return 'bg-[var(--panel-strong)] text-[var(--text-inverse)]'
+        }
+        if (inflowTypes.has(type)) {
+          return 'bg-[#e8f3ff] text-[#0066cc]'
+        }
+        return 'ios-chip'
+      }
+
+      function renderAccountOptions() {
+        accountSelector.innerHTML = '<option value="all">All Accounts</option>'
+        modalAccountSelect.innerHTML = ''
+
+        for (const account of bootstrapData.accounts) {
+          const option = document.createElement('option')
+          option.value = account.name
+          option.textContent = account.name
+          accountSelector.appendChild(option)
+
+          const modalOption = document.createElement('option')
+          modalOption.value = account.name
+          modalOption.textContent = account.name
+          modalAccountSelect.appendChild(modalOption)
+        }
+
+        const newAccountOption = document.createElement('option')
+        newAccountOption.value = '__new__'
+        newAccountOption.textContent = 'New account'
+        modalAccountSelect.appendChild(newAccountOption)
+
+        const current = selectedAccount()
+        accountSelector.value = bootstrapData.accounts.some((item) => item.name === current) ? current : 'all'
+        accountInitials.textContent = accountInitial(accountSelector.value)
+      }
+
+      function renderReceiverOptions() {
+        const receivers = Array.from(new Set(
+          bootstrapData.records
+            .map((record) => (record.receiver || '').trim())
+            .filter(Boolean),
+        )).sort((left, right) => left.localeCompare(right))
+
+        receiverSelect.innerHTML = '<option value="">None</option>'
+        for (const receiver of receivers) {
+          const option = document.createElement('option')
+          option.value = receiver
+          option.textContent = receiver
+          receiverSelect.appendChild(option)
+        }
+
+        const customOption = document.createElement('option')
+        customOption.value = '__custom__'
+        customOption.textContent = 'Custom receiver'
+        receiverSelect.appendChild(customOption)
+      }
+
+      function renderCurrencyOptions() {
+        currencySelect.innerHTML = ''
+        for (const currency of MAJOR_CURRENCIES) {
+          const option = document.createElement('option')
+          option.value = currency
+          option.textContent = currency
+          currencySelect.appendChild(option)
+        }
+      }
+
+      function syncAccountInput() {
+        const showCustom = modalAccountSelect.value === '__new__'
+        accountCustomWrapper.classList.toggle('hidden', !showCustom)
+        accountCustomInput.required = showCustom
+        if (!showCustom) {
+          accountCustomInput.value = ''
+        }
+      }
+
+      function syncReceiverInput() {
+        const showCustom = receiverSelect.value === '__custom__'
+        receiverCustomWrapper.classList.toggle('hidden', !showCustom)
+        receiverCustomInput.required = showCustom
+        if (!showCustom) {
+          receiverCustomInput.value = ''
+        }
+      }
+
+      function renderRecords() {
+        const records = visibleRecords()
+        recordCount.textContent = records.length
+
+        if (!records.length) {
+          recordsList.innerHTML = `
+            <div class="surface-card px-4 py-8 text-center">
+              <p class="text-[14px] text-[var(--text-secondary)]">No transactions match the selected account and filter.</p>
+            </div>
+          `
+          return
+        }
+
+        recordsList.innerHTML = records
+          .map((record) => `
+            <article class="surface-card p-4 lg:p-5">
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="record-badge rounded-full px-3 py-1 text-[11px] font-medium ${badgeClass(record.transaction_type)}">${titleCase(record.transaction_type)}</span>
+                    <span class="record-badge ios-chip rounded-full px-3 py-1 text-[11px] font-medium">${titleCase(record.payment_mode)}</span>
+                  </div>
+                  <h2 class="mt-3 truncate text-[19px] font-semibold tracking-[-0.02em]">${record.description}</h2>
+                  <p class="mt-1 text-[14px] text-[var(--text-secondary)]">${record.account_name}${record.receiver ? ` • ${record.receiver}` : ''}</p>
+                  <p class="mt-1 text-[12px] text-[var(--text-secondary)]">${titleCase(record.category)}${record.subcategory ? ` • ${record.subcategory}` : ''}</p>
+                </div>
+                <div class="shrink-0 text-left sm:text-right">
+                  <p class="text-[20px] font-semibold tracking-[-0.02em]">${formatCurrency(record.amount, record.currency)}</p>
+                  <p class="mt-1 text-[12px] text-[var(--text-secondary)]">${formatDate(record.created_at)}</p>
+                </div>
+              </div>
+            </article>
+          `)
+          .join('')
+      }
+
+      function fillSelectOptions(select, values, includeBlank = false) {
+        select.innerHTML = includeBlank ? '<option value="">None</option>' : ''
+        for (const value of values) {
+          const option = document.createElement('option')
+          option.value = value
+          option.textContent = titleCase(value)
+          select.appendChild(option)
+        }
+      }
+
+      function openFormModal() {
+        modalOverlay.classList.remove('hidden')
+        document.body.classList.add('overflow-hidden')
+      }
+
+      function closeFormModalView() {
+        modalOverlay.classList.add('hidden')
+        document.body.classList.remove('overflow-hidden')
+      }
+
+      function prefillFormAccount() {
+        const selected = selectedAccount()
+        const hasSelected = bootstrapData.accounts.some((item) => item.name === selected)
+        if (hasSelected) {
+          modalAccountSelect.value = selected
+        } else if (bootstrapData.accounts.length > 0) {
+          modalAccountSelect.value = bootstrapData.accounts[0].name
+        } else {
+          modalAccountSelect.value = '__new__'
+        }
+        syncAccountInput()
+      }
+
+      function resetModalDefaults() {
+        recordForm.reset()
+        formStatus.textContent = ''
+        formStatus.className = 'hidden rounded-[16px] px-4 py-3 text-sm'
+        recordForm.elements.created_at.value = localDateTimeValue()
+        recordForm.elements.updated_at.value = localDateTimeValue()
+        currencySelect.value = 'INR'
+        receiverSelect.value = ''
+        syncReceiverInput()
+        prefillFormAccount()
+      }
+
+      async function loadBootstrap() {
+        const response = await fetch('/api/bootstrap')
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load transactions.')
+        }
+
+        bootstrapData = data
+        renderAccountOptions()
+        fillSelectOptions(transactionTypeSelect, data.transaction_types)
+        fillSelectOptions(paymentModeSelect, data.payment_modes)
+        fillSelectOptions(categorySelect, data.categories)
+        renderReceiverOptions()
+        renderCurrencyOptions()
+        resetModalDefaults()
+        renderRecords()
+      }
+
+      themeToggle.addEventListener('click', () => {
+        applyTheme(currentTheme() === 'dark' ? 'light' : 'dark')
+      })
+
+      accountSelector.addEventListener('change', () => {
+        saveSelectedAccount(accountSelector.value)
+        accountInitials.textContent = accountInitial(accountSelector.value)
+        prefillFormAccount()
+        renderRecords()
+      })
+
+      filterType.addEventListener('change', renderRecords)
+      openModal.addEventListener('click', () => {
+        resetModalDefaults()
+        openFormModal()
+      })
+      closeModal.addEventListener('click', closeFormModalView)
+      modalOverlay.addEventListener('click', (event) => {
+        if (event.target === modalOverlay) {
+          closeFormModalView()
+        }
+      })
+
+      modalAccountSelect.addEventListener('change', syncAccountInput)
+      receiverSelect.addEventListener('change', syncReceiverInput)
+
+      document.addEventListener('keydown', (event) => {
+        if (isDesktopLayout() && event.ctrlKey && !event.metaKey && !event.altKey && event.key.toLowerCase() === 'n') {
+          event.preventDefault()
+          resetModalDefaults()
+          openFormModal()
+        }
+      })
+
+      recordForm.addEventListener('submit', async (event) => {
+        event.preventDefault()
+        formStatus.className = 'hidden rounded-[16px] px-4 py-3 text-sm'
+        const payload = Object.fromEntries(new FormData(recordForm).entries())
+        payload.account_name = modalAccountSelect.value === '__new__'
+          ? accountCustomInput.value.trim()
+          : modalAccountSelect.value
+        payload.receiver = receiverSelect.value === '__custom__'
+          ? receiverCustomInput.value.trim()
+          : receiverSelect.value
+        payload.subcategory = String(payload.subcategory || '')
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .join(', ')
+
+        if (!payload.account_name) {
+          formStatus.textContent = 'Account is required.'
+          formStatus.className = 'rounded-[16px] bg-[#fff1f0] px-4 py-3 text-sm text-[#b42318]'
+          return
+        }
+
+        try {
+          const response = await fetch('/api/new', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+          const result = await response.json()
+          if (!response.ok) {
+            throw new Error(result.error || 'Failed to save transaction.')
+          }
+
+          formStatus.textContent = `Saved ${result.record.description} in ${result.record.account_name}.`
+          formStatus.className = 'rounded-[16px] bg-[#e8f3ff] px-4 py-3 text-sm text-[#0066cc]'
+          saveSelectedAccount(payload.account_name)
+          await loadBootstrap()
+          window.setTimeout(() => {
+            closeFormModalView()
+            formStatus.className = 'hidden rounded-[16px] px-4 py-3 text-sm'
+          }, 700)
+        } catch (error) {
+          formStatus.textContent = error.message || 'Failed to save transaction.'
+          formStatus.className = 'rounded-[16px] bg-[#fff1f0] px-4 py-3 text-sm text-[#b42318]'
+        }
+      })
+
+      applyTheme(currentTheme())
+      loadBootstrap().catch((error) => {
+        recordsList.innerHTML = `
+          <div class="surface-card px-4 py-8 text-center">
+            <p class="text-[14px] text-[#b42318]">${error.message || 'Failed to load transactions.'}</p>
+          </div>
+        `
+      })
+    </script>
+  </body>
+</html>
