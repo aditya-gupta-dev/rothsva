@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../providers/auth-context'
 import { AuthShell } from '../ui/components/auth-shell'
@@ -13,10 +13,16 @@ type FormState = {
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { isAuthenticated, login } = useAuth()
   const [form, setForm] = useState<FormState>({ email: '', password: '' })
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, navigate])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -25,7 +31,6 @@ export function LoginPage() {
 
     try {
       await login(form)
-      navigate('/dashboard', { replace: true })
     } catch (submitError) {
       const message =
         submitError instanceof Error

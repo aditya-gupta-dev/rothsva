@@ -1,3 +1,5 @@
+import type { ApiEnvelope } from './auth'
+
 export const API_URL =
   import.meta.env.VITE_API_URL?.replace(/\/$/, '') ?? 'http://localhost:3000'
 
@@ -20,19 +22,18 @@ export async function apiRequest<T>(
     },
   })
 
-  const payload = (await response.json().catch(() => null)) as
-    | { error?: string }
-    | T
-    | null
+  const payload = (await response.json().catch(() => null)) as ApiEnvelope<T> | null
 
-  if (!response.ok) {
+  if (!response.ok || payload?.err) {
     const message =
-      payload && typeof payload === 'object' && 'error' in payload
-        ? payload.error
-        : 'Request failed'
+      payload?.err || 'Request failed'
 
-    throw new Error(message || 'Request failed')
+    throw new Error(message)
   }
 
-  return payload as T
+  if (!payload?.data) {
+    throw new Error('Missing response data')
+  }
+
+  return payload.data
 }

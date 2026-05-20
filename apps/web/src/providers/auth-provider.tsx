@@ -4,7 +4,7 @@ import {
   type ReactNode,
 } from 'react'
 import { apiRequest } from '../lib/api'
-import type { LoginResponse, MeResponse, RegisterResponse } from '../lib/auth'
+import type { LoginData, MeData, RegisterData } from '../lib/auth'
 import { AuthContext, type AuthContextValue } from './auth-context'
 
 const STORAGE_KEY = 'zapisi.auth-token'
@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function hydrateSession() {
       try {
-        const response = await apiRequest<MeResponse>('/me', {
+        const response = await apiRequest<MeData>('/me', {
           method: 'GET',
           token: activeToken,
         })
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [token])
 
   async function login(input: Parameters<AuthContextValue['login']>[0]) {
-    const response = await apiRequest<LoginResponse>('/auth/login', {
+    const response = await apiRequest<LoginData>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(input),
     })
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function register(input: Parameters<AuthContextValue['register']>[0]) {
-    await apiRequest<RegisterResponse>('/auth/register', {
+    await apiRequest<RegisterData>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(input),
     })

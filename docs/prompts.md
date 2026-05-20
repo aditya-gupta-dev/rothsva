@@ -107,3 +107,15 @@ Output:
 * A complete SQLite migration SQL script
 * No explanations, only SQL statements
 `
+
+### Bug fix & Creating a button to enter records. 
+
+#### codex
+
+`First of all when user sign in is completed he doesnt get redirect to his own dashboard page. Fix that. then create on the dashboard page create a floating action button, make sure it is responsive on mobile it should appear on the bottom right side of screen. on desktop bottom center and open when pressed CTRL+N is pressed. Follow the design @/docs/apple-design.md`
+
+### New Record entry form 
+
+#### codex 
+
+`` 

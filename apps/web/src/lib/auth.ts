@@ -1,18 +1,24 @@
 export type AuthUser = {
-  id: string
+  id: number
   name: string
   email: string
 }
 
-export type LoginResponse = {
+export type ApiEnvelope<T> = {
+  data: T | null
+  err: string | null
+}
+
+export type LoginData = {
   token: string
   user: AuthUser
 }
 
-export type MeResponse = {
+export type MeData = {
   user: AuthUser
 }
 
-export type RegisterResponse = {
+export type RegisterData = {
   user: AuthUser
+  message: string
 }
