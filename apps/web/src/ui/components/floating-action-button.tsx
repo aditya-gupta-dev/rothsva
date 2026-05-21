@@ -246,6 +246,7 @@ export function FloatingActionButton() {
                             setDraft((current) => ({
                               ...current,
                               transactionType: type,
+                              ...(type === 'credit' ? { merchantName: '' } : {}),
                             }))
                           }
                           className={`min-h-11 rounded-full px-4 text-sm font-semibold capitalize tracking-[-0.01em] transition ${
@@ -329,69 +330,71 @@ export function FloatingActionButton() {
                   </SelectField>
                 </div>
 
-                <label className="flex flex-col gap-2 text-left">
-                  <span className="text-sm font-medium text-[var(--color-text)]">
-                    Receiver name
-                  </span>
-                  <div className="relative">
-                    <input
-                      value={draft.merchantName}
-                      onChange={(event) => {
-                        updateDraft('merchantName', event)
-                        setIsMerchantDropdownOpen(true)
-                      }}
-                      onFocus={() => setIsMerchantDropdownOpen(true)}
-                      onBlur={() => {
-                        window.setTimeout(() => {
-                          setIsMerchantDropdownOpen(false)
-                        }, 120)
-                      }}
-                      placeholder="Merchant name"
-                      className="min-h-12 w-full rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-input)] px-4 pr-12 text-base text-[var(--color-text)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[color:rgba(0,113,227,0.14)]"
-                    />
-                    <button
-                      type="button"
-                      onMouseDown={(event) => {
-                        event.preventDefault()
-                        setIsMerchantDropdownOpen((current) => !current)
-                      }}
-                      className="absolute inset-y-1.5 right-1.5 inline-flex w-10 items-center justify-center rounded-full text-sm text-[var(--color-muted)] transition hover:bg-[var(--color-panel-subtle)] hover:text-[var(--color-text)]"
-                      aria-label="Toggle merchant suggestions"
-                    >
-                      ▾
-                    </button>
-                    {isMerchantDropdownOpen ? (
-                      <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 overflow-hidden rounded-[24px] border border-[var(--color-border)] bg-[var(--color-panel-strong)] shadow-[0_24px_64px_-36px_rgba(0,0,0,0.5)]">
-                        <div className="max-h-52 overflow-y-auto p-2">
-                          {filteredMerchants.length > 0 ? (
-                            filteredMerchants.map((merchant) => (
-                              <button
-                                key={merchant.id}
-                                type="button"
-                                onMouseDown={(event) => {
-                                  event.preventDefault()
-                                  setDraft((current) => ({
-                                    ...current,
-                                    merchantName: merchant.name,
-                                  }))
-                                  setIsMerchantDropdownOpen(false)
-                                }}
-                                className="flex min-h-11 w-full items-center rounded-[18px] px-3 text-left text-sm text-[var(--color-text)] transition hover:bg-[var(--color-panel-subtle)]"
-                              >
-                                {merchant.name}
-                              </button>
-                            ))
-                          ) : (
-                            <div className="px-3 py-3 text-sm text-[var(--color-muted)]">
-                              No saved merchants match. Your typed value will be
-                              used as-is.
-                            </div>
-                          )}
+                {draft.transactionType === 'debit' && (
+                  <label className="flex flex-col gap-2 text-left">
+                    <span className="text-sm font-medium text-[var(--color-text)]">
+                      Receiver name
+                    </span>
+                    <div className="relative">
+                      <input
+                        value={draft.merchantName}
+                        onChange={(event) => {
+                          updateDraft('merchantName', event)
+                          setIsMerchantDropdownOpen(true)
+                        }}
+                        onFocus={() => setIsMerchantDropdownOpen(true)}
+                        onBlur={() => {
+                          window.setTimeout(() => {
+                            setIsMerchantDropdownOpen(false)
+                          }, 120)
+                        }}
+                        placeholder="Merchant name"
+                        className="min-h-12 w-full rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-input)] px-4 pr-12 text-base text-[var(--color-text)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[color:rgba(0,113,227,0.14)]"
+                      />
+                      <button
+                        type="button"
+                        onMouseDown={(event) => {
+                          event.preventDefault()
+                          setIsMerchantDropdownOpen((current) => !current)
+                        }}
+                        className="absolute inset-y-1.5 right-1.5 inline-flex w-10 items-center justify-center rounded-full text-sm text-[var(--color-muted)] transition hover:bg-[var(--color-panel-subtle)] hover:text-[var(--color-text)]"
+                        aria-label="Toggle merchant suggestions"
+                      >
+                        ▾
+                      </button>
+                      {isMerchantDropdownOpen ? (
+                        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 overflow-hidden rounded-[24px] border border-[var(--color-border)] bg-[var(--color-panel-strong)] shadow-[0_24px_64px_-36px_rgba(0,0,0,0.5)]">
+                          <div className="max-h-52 overflow-y-auto p-2">
+                            {filteredMerchants.length > 0 ? (
+                              filteredMerchants.map((merchant) => (
+                                <button
+                                  key={merchant.id}
+                                  type="button"
+                                  onMouseDown={(event) => {
+                                    event.preventDefault()
+                                    setDraft((current) => ({
+                                      ...current,
+                                      merchantName: merchant.name,
+                                    }))
+                                    setIsMerchantDropdownOpen(false)
+                                  }}
+                                  className="flex min-h-11 w-full items-center rounded-[18px] px-3 text-left text-sm text-[var(--color-text)] transition hover:bg-[var(--color-panel-subtle)]"
+                                >
+                                  {merchant.name}
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-3 py-3 text-sm text-[var(--color-muted)]">
+                                No saved merchants match. Your typed value will be
+                                used as-is.
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ) : null}
-                  </div>
-                </label>
+                      ) : null}
+                    </div>
+                  </label>
+                )}
                 </div>
 
                 <div className="space-y-5 lg:flex lg:flex-col">

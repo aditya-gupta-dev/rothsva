@@ -154,3 +154,5 @@ if these are not there in localStorage don't allow the add-entry-button work sho
 
   follow the @docs/apple-design.md 
   `
+
+### Dashboard Page 
