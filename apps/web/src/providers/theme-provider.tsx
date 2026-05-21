@@ -19,6 +19,15 @@ function getSystemTheme(): Theme {
     : 'light'
 }
 
+function resolveTheme(preference: ThemePreference): Theme {
+  return preference === 'system' ? getSystemTheme() : preference
+}
+
+function applyTheme(theme: Theme) {
+  document.documentElement.dataset.theme = theme
+  document.documentElement.style.colorScheme = theme
+}
+
 function getStoredPreference(): ThemePreference {
   return (window.localStorage.getItem(STORAGE_KEY) as ThemePreference | null) ?? 'system'
 }
@@ -26,27 +35,17 @@ function getStoredPreference(): ThemePreference {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setPreferenceState] =
     useState<ThemePreference>(getStoredPreference)
-  const [theme, setTheme] = useState<Theme>(() =>
-    preference === 'system' ? getSystemTheme() : preference,
-  )
+  const [theme, setTheme] = useState<Theme>(() => resolveTheme(preference))
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-
-    function applyTheme(nextPreference: ThemePreference) {
-      const nextTheme =
-        nextPreference === 'system' ? getSystemTheme() : nextPreference
-
-      setTheme(nextTheme)
-      document.documentElement.dataset.theme = nextTheme
-      document.documentElement.style.colorScheme = nextTheme
-    }
-
-    applyTheme(preference)
+    applyTheme(theme)
 
     const onChange = () => {
       if (preference === 'system') {
-        applyTheme('system')
+        const systemTheme = resolveTheme('system')
+        setTheme(systemTheme)
+        applyTheme(systemTheme)
       }
     }
 
@@ -55,10 +54,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => {
       mediaQuery.removeEventListener('change', onChange)
     }
-  }, [preference])
+  }, [preference, theme])
 
   function setPreference(value: ThemePreference) {
+    const nextTheme = resolveTheme(value)
     setPreferenceState(value)
+    setTheme(nextTheme)
+    applyTheme(nextTheme)
     window.localStorage.setItem(STORAGE_KEY, value)
   }
 

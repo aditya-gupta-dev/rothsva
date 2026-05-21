@@ -4,7 +4,9 @@ export function ThemeToggle() {
   const { preference, setPreference } = useTheme()
 
   return (
-    <div className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-panel)] p-1">
+    <fieldset className="pointer-events-auto">
+      <legend className="sr-only">Theme preference</legend>
+      <div className="flex flex-wrap gap-4">
       {(['light', 'dark', 'system'] as const).map((option) => {
         const active = preference === option
 
@@ -13,16 +15,37 @@ export function ThemeToggle() {
             key={option}
             type="button"
             onClick={() => setPreference(option)}
-            className={`rounded-full px-3 py-2 text-xs font-semibold capitalize tracking-[0.02em] transition ${
-              active
-                ? 'bg-[var(--color-text)] text-[var(--color-canvas)]'
-                : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'
-            }`}
+            aria-pressed={active}
+            className="group inline-flex min-h-11 items-center gap-3 rounded-full px-2 py-1 text-sm font-medium capitalize text-[var(--color-text)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-canvas)]"
           >
-            {option}
+            <span
+              className={`flex h-5 w-5 items-center justify-center rounded-full border transition ${
+                active
+                  ? 'border-[var(--color-accent)]'
+                  : 'border-[var(--color-border-strong)] group-hover:border-[var(--color-text)]'
+              }`}
+            >
+              <span
+                className={`h-2.5 w-2.5 rounded-full transition ${
+                  active
+                    ? 'bg-[var(--color-accent)]'
+                    : 'bg-transparent'
+                }`}
+              />
+            </span>
+            <span
+              className={
+                active
+                  ? 'text-[var(--color-heading)]'
+                  : 'text-[var(--color-muted)] group-hover:text-[var(--color-text)]'
+              }
+            >
+              {option}
+            </span>
           </button>
         )
       })}
-    </div>
+      </div>
+    </fieldset>
   )
 }

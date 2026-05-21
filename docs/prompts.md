@@ -118,4 +118,39 @@ Output:
 
 #### codex 
 
-`` 
+`when the page first loads fetch these things in the background read the @/apps/backend/schemas/index.ts file for the schema
+first /categories/main returns
+Response data: Array<{ id: number, name: string, parentId: null }> 
+second /categories/:parentId/sub
+Response data: Array<{ id: number, name: string, parentId: number }>
+third 
+third /payment-modes 
+Response data: Array<{ id: number, name: string }>
+after fetching these things store them in localStorage and initially everytime before fetching check whether these items are present in localstorage or not only then fetch, 
+if these are not there in localStorage don't allow the add-entry-button work show a popup message saying 'required data not loaded yet'
+, and create a form following the design @/docs/apple-design.md now, here's how you'll built the form, at top choose transactionType: credit/debit [tap tab option in row],  next amount [input field], paymentModeId: [Dropdown get payment modes name from localstorage], currency: default inr [input field], reciever Id: [text field], now category fetch from list of category in localStorage [dropdown], description [textarea], Add Record button make sure it responsive and the modal comes out with animation and the form is scrollable` 
+
+### Minor Mistake fixes in form 
+#### codex 
+
+`instead of entering the reciever id there's a endpoint called /merchants which returns this Array<{ id: number, name: string }> data get and store it same way the way you store categories and payment_modes, now let the user enter reciever name and you map it out to its ID while uploading, and create a hidden field called sub-category that is only showed when a category is selected and sub-category shows the sub-category of that category How it works now:
+   1. If you spend on Rent, category_id = ID of "Rent" (which has parent_id
+      = null).
+   2. If you spend on Breakfast, category_id = ID of "Breakfast" (which has
+      parent_id = <Food_ID>).`
+
+### Form Resizing on different devices 
+#### codex 
+
+`why is the form in 9:16 aspect ratio at least on desktop, tablets
+  show it as 16:9, and instead of showing Dashboard Signed in as
+  text put a refresh button that will re-fetch all the recievers
+  name, categories, payment-modes etc.
+
+  And add a bottom nav with dashboard, settings page, and put Floating action button at the center above the nav and it should look like it is cutting the bottom nav bar in curved way,
+  
+  add the settings page, showing general info of the user. theme toggle buttons should be there and remove them from the top bar. also a logout button, refetching localstorage data button
+  the entire app should take same width as it is taking now on desktops 
+
+  follow the @docs/apple-design.md 
+  `
