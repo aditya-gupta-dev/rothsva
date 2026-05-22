@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getTransactions } from '../lib/api'
 import { useAuth } from '../providers/auth-context'
 import { ArrowUpRight, ArrowDownLeft, ChevronRight } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 
 interface Transaction {
   id: number
@@ -18,27 +18,15 @@ interface Transaction {
 
 export function TransactionsPage() {
   const { token } = useAuth()
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  useEffect(() => {
-    async function load() {
-      if (!token) return
-      try {
-        const data = await getTransactions(token)
-        setTransactions(data)
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load transactions')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    load()
-  }, [token])
+  const { data: transactions = [], isLoading, error } = useQuery<Transaction[]>({
+    queryKey: ['transactions'],
+    queryFn: () => getTransactions(token!).then(data => data as Transaction[]),
+    enabled: !!token,
+  })
 
-  if (isLoading) {
+  if (isLoading && transactions.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <p className="text-[var(--color-muted)]">Loading transactions...</p>
@@ -59,7 +47,7 @@ export function TransactionsPage() {
 
       <div className="mt-10 flex-1 overflow-hidden">
         {error ? (
-          <p className="text-[var(--color-danger)]">{error}</p>
+          <p className="text-[var(--color-danger)]">{(error as Error).message}</p>
         ) : (
           <div className="h-full space-y-3 overflow-y-auto pb-32 pr-2 scrollbar-hide">
             {transactions.map((txn) => (
@@ -70,10 +58,10 @@ export function TransactionsPage() {
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-full ${
+                    className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors ${
                       txn.transactionType === 'credit'
-                        ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                        ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 group-hover:bg-green-200'
+                        : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 group-hover:bg-red-200'
                     }`}
                   >
                     {txn.transactionType === 'credit' ? (

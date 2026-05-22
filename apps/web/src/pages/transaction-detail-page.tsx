@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getTransactionDetail } from '../lib/api'
 import { useAuth } from '../providers/auth-context'
 import { ChevronLeft, Calendar, Tag, CreditCard, Hash, FileText, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 
 interface TransactionDetail {
   id: number
@@ -21,25 +21,13 @@ interface TransactionDetail {
 export function TransactionDetailPage() {
   const { id } = useParams()
   const { token } = useAuth()
-  const [transaction, setTransaction] = useState<TransactionDetail | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  useEffect(() => {
-    async function load() {
-      if (!token || !id) return
-      try {
-        const data = await getTransactionDetail(id, token)
-        setTransaction(data)
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load transaction details')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    load()
-  }, [id, token])
+  const { data: transaction, isLoading, error } = useQuery<TransactionDetail>({
+    queryKey: ['transactions', id],
+    queryFn: () => getTransactionDetail(id!, token!).then(data => data as TransactionDetail),
+    enabled: !!token && !!id,
+  })
 
   if (isLoading) {
     return (
@@ -52,7 +40,7 @@ export function TransactionDetailPage() {
   if (error || !transaction) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4">
-        <p className="text-[var(--color-danger)]">{error || 'Transaction not found'}</p>
+        <p className="text-[var(--color-danger)]">{(error as Error)?.message || 'Transaction not found'}</p>
         <button
           onClick={() => navigate('/transactions')}
           className="rounded-full bg-[var(--color-text)] px-6 py-2 text-sm font-semibold text-[var(--color-canvas)]"
@@ -70,18 +58,18 @@ export function TransactionDetailPage() {
       <header className="flex items-center gap-4 pt-2">
         <button
           onClick={() => navigate(-1)}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-panel)] border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-panel-subtle)]"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-panel)] border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-panel-subtle)] transition-colors active:scale-90"
         >
           <ChevronLeft size={20} />
         </button>
-        <h1 className="text-xl font-semibold tracking-tight text-[var(--color-heading)]">
+        <h1 className="text-xl font-semibold tracking-tight text-[var(--color-heading)] truncate">
           Transaction Details
         </h1>
       </header>
 
       <div className="mt-8 flex flex-col items-center justify-center py-10">
         <div
-          className={`mb-6 flex h-20 w-20 items-center justify-center rounded-full ${
+          className={`mb-6 flex h-20 w-20 items-center justify-center rounded-full shadow-inner ${
             isCredit
               ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
               : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
@@ -99,7 +87,7 @@ export function TransactionDetailPage() {
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-[32px] border border-[var(--color-border)] bg-[var(--color-panel)] p-6 shadow-sm">
+        <div className="rounded-[32px] border border-[var(--color-border)] bg-[var(--color-panel)] p-6 shadow-sm backdrop-blur-md">
           <div className="space-y-6">
             <DetailItem
               icon={<Calendar size={18} />}
@@ -122,7 +110,7 @@ export function TransactionDetailPage() {
           </div>
         </div>
 
-        <div className="rounded-[32px] border border-[var(--color-border)] bg-[var(--color-panel)] p-6 shadow-sm">
+        <div className="rounded-[32px] border border-[var(--color-border)] bg-[var(--color-panel)] p-6 shadow-sm backdrop-blur-md">
           <div className="space-y-6">
             <DetailItem
               icon={<Hash size={18} />}

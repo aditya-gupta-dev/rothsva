@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
 import { useReferenceData } from '../providers/reference-data-context'
 import { Button } from '../ui/components/button'
 import { getMonthlyStats } from '../lib/api'
 import { useAuth } from '../providers/auth-context'
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 
 interface DailyStat {
   date: string
@@ -14,21 +15,13 @@ interface DailyStat {
 export function DashboardPage() {
   const { isLoading: isRefLoading, refresh } = useReferenceData()
   const { token } = useAuth()
-  const [stats, setStats] = useState<DailyStat[]>([])
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    async function load() {
-      if (!token) return
-      try {
-        const data = await getMonthlyStats(token)
-        setStats(data)
-      } catch (e) {
-        console.error('Failed to load stats', e)
-      }
-    }
-    load()
-  }, [token])
+  const { data: stats = [], isLoading } = useQuery<DailyStat[]>({
+    queryKey: ['stats', 'monthly'],
+    queryFn: () => getMonthlyStats(token!),
+    enabled: !!token,
+  })
 
   async function handleRefresh() {
     setError('')
@@ -46,8 +39,16 @@ export function DashboardPage() {
   const totalCredits = stats.reduce((acc, curr) => acc + (curr.credit || 0), 0)
   const totalDebits = stats.reduce((acc, curr) => acc + (curr.debit || 0), 0)
 
+  if (isLoading && stats.length === 0) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="text-[var(--color-muted)]">Loading insights...</p>
+      </div>
+    )
+  }
+
   return (
-    <section className="flex flex-1 flex-col pb-32">
+    <section className="flex flex-1 flex-col">
       <header className="flex items-center justify-between gap-4 pt-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-muted)]">
@@ -59,7 +60,7 @@ export function DashboardPage() {
         </div>
         <div>
           <Button variant="secondary" onClick={handleRefresh} disabled={isRefLoading}>
-            {isRefLoading ? 'Refreshing...' : 'Refresh Data'}
+            {isRefLoading ? 'Refreshing...' : 'Refresh Local Cache'}
           </Button>
         </div>
       </header>
@@ -142,7 +143,7 @@ interface StatCardProps {
 
 function StatCard({ title, amount, data, dataKey, color, gradientId }: StatCardProps) {
   return (
-    <div className="overflow-hidden rounded-[40px] border border-[var(--color-border)] bg-[var(--color-panel)] shadow-[0_32px_100px_-56px_rgba(0,0,0,0.52)] backdrop-blur-xl">
+    <div className="overflow-hidden rounded-[40px] border border-[var(--color-border)] bg-[var(--color-panel)] shadow-[0_32px_100px_-56px_rgba(0,0,0,0.52)] backdrop-blur-xl transition-all hover:shadow-2xl">
       <div className="p-8 pb-0">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-muted)]">
           {title}
@@ -164,7 +165,7 @@ function StatCard({ title, amount, data, dataKey, color, gradientId }: StatCardP
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   return (
-                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-panel-strong)] p-2 shadow-xl">
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-panel-strong)] p-2 shadow-xl backdrop-blur-md">
                       <p className="text-xs font-bold text-[var(--color-heading)]">
                         {payload[0].payload.date}
                       </p>

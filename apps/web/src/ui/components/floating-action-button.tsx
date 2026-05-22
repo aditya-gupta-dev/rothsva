@@ -10,6 +10,7 @@ import { apiRequest } from '../../lib/api'
 import { useReferenceData } from '../../providers/reference-data-context'
 import { useAuth } from '../../providers/auth-context'
 import { useFabPosition } from '../../providers/fab-position-context'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from './button'
 import { SelectField } from './select-field'
 import { TextareaField } from './textarea-field'
@@ -45,6 +46,7 @@ export function FloatingActionButton() {
   })
   const { token } = useAuth()
   const { position } = useFabPosition()
+  const queryClient = useQueryClient()
   const {
     isReady,
     isLoading,
@@ -165,6 +167,10 @@ export function FloatingActionButton() {
           description: draft.description || undefined,
         }),
       })
+
+      // Invalidate queries to refresh data across the app
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      await queryClient.invalidateQueries({ queryKey: ['stats'] })
 
       setDraft({
         transactionType: 'debit',
