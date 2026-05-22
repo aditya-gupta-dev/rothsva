@@ -37,3 +37,15 @@ export async function apiRequest<T>(
 
   return payload.data
 }
+
+export async function getTransactions(token: string) {
+  return apiRequest<unknown[]>('/transactions', { token })
+}
+
+export async function getTransactionDetail(id: string, token: string) {
+  return apiRequest<unknown>(`/transactions/${id}`, { token })
+}
+
+export async function getMonthlyStats(token: string) {
+  return apiRequest<unknown[]>('/stats/monthly', { token })
+}

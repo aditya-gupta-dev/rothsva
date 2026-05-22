@@ -156,3 +156,7 @@ if these are not there in localStorage don't allow the add-entry-button work sho
   `
 
 ### Dashboard Page 
+
+#### gemini  
+
+`instead of using complete text for bottom nav use icons instead. and on hover show the text, add a new page called transactions and show a scrollable list of transactions. where each list item will look like this @/photos/transaction-list-item.png for credits show the amount in green, and debit in red. Follow the design docs @/docs/apple-design.md. On tapping on each transaction it should open a new route with that transaction id. Showing everything related to that transaction in detail. Also on the main dashboard. add two cards in row for desktop, total credits this month and debits this month using shadcn area chart gradient to show credits/debit every day with white text here's the docs for that https://ui.shadcn.com/charts/area#charts, also write the backend code endpoint & queries to make this possible. Make sure to follow the design file & and make sure this is responsive.`

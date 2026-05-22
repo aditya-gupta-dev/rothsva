@@ -6,7 +6,7 @@ import { cors } from 'hono/cors';
 import { jwt, sign } from 'hono/jwt';
 import { db } from './src/database';
 import { users, categories, paymentModes, transactions, merchants } from './src/database/schemas';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, sql } from 'drizzle-orm';
 import { tryCatch } from '@zapisi/utils';
 
 const app = new Hono();
@@ -293,6 +293,35 @@ app.post('/transactions', auth, async (c) => {
   return c.json({ data: { message: 'Transaction created successfully' }, err: null });
 });
 
+app.get('/transactions', auth, async (c) => {
+  const payload = c.get('jwtPayload');
+  const userId = payload.id;
+
+  const result = await tryCatch(
+    db.select({
+      id: transactions.id,
+      amount: transactions.amount,
+      currency: transactions.currency,
+      transactionType: transactions.transactionType,
+      description: transactions.description,
+      createdAt: transactions.createdAt,
+      merchantName: merchants.name,
+      categoryName: categories.name,
+      paymentModeName: paymentModes.name,
+    })
+    .from(transactions)
+    .leftJoin(merchants, eq(transactions.receiverId, merchants.id))
+    .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .leftJoin(paymentModes, eq(transactions.paymentModeId, paymentModes.id))
+    .where(eq(transactions.userId, userId))
+    .orderBy(sql`${transactions.createdAt} DESC`)
+  );
+
+  if (result.err) return errorResponse(c, 'Failed to fetch transactions', 500);
+
+  return c.json({ data: result.data, err: null });
+});
+
 app.get('/transactions/:id', auth, async (c) => {
   const payload = c.get('jwtPayload');
   const id = parseInt(c.req.param('id'));
@@ -300,16 +329,76 @@ app.get('/transactions/:id', auth, async (c) => {
   if (isNaN(id)) return errorResponse(c, 'Invalid transaction ID', 400);
 
   const result = await tryCatch(
-    db.select()
-      .from(transactions)
-      .where(and(eq(transactions.id, id), eq(transactions.userId, payload.id)))
-      .limit(1)
+    db.select({
+      id: transactions.id,
+      amount: transactions.amount,
+      currency: transactions.currency,
+      transactionType: transactions.transactionType,
+      description: transactions.description,
+      officialTxnId: transactions.officialTxnId,
+      createdAt: transactions.createdAt,
+      updatedAt: transactions.updatedAt,
+      merchantName: merchants.name,
+      categoryName: categories.name,
+      paymentModeName: paymentModes.name,
+    })
+    .from(transactions)
+    .leftJoin(merchants, eq(transactions.receiverId, merchants.id))
+    .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .leftJoin(paymentModes, eq(transactions.paymentModeId, paymentModes.id))
+    .where(and(eq(transactions.id, id), eq(transactions.userId, payload.id)))
+    .limit(1)
   );
 
   if (result.err) return errorResponse(c, 'Failed to fetch transaction', 500);
   if (!result.data?.[0]) return errorResponse(c, 'Transaction not found', 404);
 
   return c.json({ data: result.data[0], err: null });
+});
+
+app.get('/stats/monthly', auth, async (c) => {
+  const payload = c.get('jwtPayload');
+  const userId = payload.id;
+
+  // Get start of current month
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+  const result = await tryCatch(
+    db.select({
+      date: sql<string>`date(${transactions.createdAt})`,
+      type: transactions.transactionType,
+      total: sql<number>`sum(${transactions.amount})`,
+    })
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        sql`${transactions.createdAt} >= ${startOfMonth}`
+      )
+    )
+    .groupBy(sql`date(${transactions.createdAt})`, transactions.transactionType)
+  );
+
+  if (result.err) return errorResponse(c, 'Failed to fetch stats', 500);
+
+  // Transform data for the chart
+  const dailyStats: Record<string, { date: string; credit: number; debit: number }> = {};
+  
+  result.data.forEach((row: any) => {
+    if (!dailyStats[row.date]) {
+      dailyStats[row.date] = { date: row.date, credit: 0, debit: 0 };
+    }
+    if (row.type === 'credit') {
+      dailyStats[row.date].credit = row.total;
+    } else {
+      dailyStats[row.date].debit = row.total;
+    }
+  });
+
+  const chartData = Object.values(dailyStats).sort((a, b) => a.date.localeCompare(b.date));
+
+  return c.json({ data: chartData, err: null });
 });
 
 export default {
