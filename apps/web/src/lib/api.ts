@@ -49,3 +49,10 @@ export async function getTransactionDetail(id: string, token: string) {
 export async function getMonthlyStats(token: string) {
   return apiRequest<unknown[]>('/stats/monthly', { token })
 }
+
+export async function deleteTransaction(id: number, token: string) {
+  return apiRequest<{ message: string }>(`/transactions/${id}`, {
+    method: 'DELETE',
+    token,
+  })
+}

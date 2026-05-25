@@ -9,7 +9,7 @@ const navItems = [
 
 export function AppBottomNav() {
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-60 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
       <div className="mx-auto w-full max-w-6xl">
         <div className="pointer-events-auto relative mx-auto max-w-xl rounded-[32px] border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-4 shadow-[0_28px_90px_-52px_rgba(0,0,0,0.58)] backdrop-blur-xl">
           <nav className="flex items-center justify-around gap-2">

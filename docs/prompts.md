@@ -166,3 +166,10 @@ if these are not there in localStorage don't allow the add-entry-button work sho
 #### gemini 
 
 `dude everytime someone visits a page the page it does a query to the database fix that. first of all install react-query, and use it to implement caching, and add refresh button to invalidate the cache and refetch the query put the refresh button at the no-background top bar. and pus the list bit downwards. Follow the @/docs/apple-design.md`
+
+
+### tooltip visibility Fixes, transaction deletion, relocating the description area 
+
+#### gemini 
+
+`Implement the following. first of all tooltip appears behind the floating action button bring it in front, at the top of each transaction item page put a dropdown like three dots with option to delete, the transaction. and also backend query to do so, in particular transaction page you show the description amongst other things in between transaction-id & type so instead of description put, sub-category field and display it, below the entire thing in a non editable text box like area show the description`

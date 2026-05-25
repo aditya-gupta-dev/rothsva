@@ -401,6 +401,24 @@ app.get('/stats/monthly', auth, async (c) => {
   return c.json({ data: chartData, err: null });
 });
 
+app.delete('/transactions/:id', auth, async (c) => {
+  const payload = c.get('jwtPayload');
+  const id = parseInt(c.req.param('id'));
+
+  if (isNaN(id)) return errorResponse(c, 'Invalid transaction ID', 400);
+
+  const result = await tryCatch(
+    db.delete(transactions)
+      .where(and(eq(transactions.id, id), eq(transactions.userId, payload.id)))
+      .returning()
+  );
+
+  if (result.err) return errorResponse(c, 'Failed to delete transaction', 500);
+  if (!result.data?.[0]) return errorResponse(c, 'Transaction not found or unauthorized', 404);
+
+  return c.json({ data: { message: 'Transaction deleted successfully' }, err: null });
+});
+
 export default {
   port: 3000,
   fetch: app.fetch,
