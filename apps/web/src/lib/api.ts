@@ -56,3 +56,11 @@ export async function deleteTransaction(id: number, token: string) {
     token,
   })
 }
+
+export async function createCategory(name: string, parentId: number | null, token: string) {
+  return apiRequest<any>('/categories', {
+    method: 'POST',
+    token,
+    body: JSON.stringify({ name, parentId }),
+  })
+}

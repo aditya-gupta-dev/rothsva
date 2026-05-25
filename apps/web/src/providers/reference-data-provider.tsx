@@ -70,6 +70,11 @@ export function ReferenceDataProvider({
       token: activeToken,
     })
 
+    // Fetch all categories and filter sub-categories to avoid many small requests
+    // However, our backend only has /categories/main and /categories/:id/sub
+    // Let's improve the backend or just fetch them correctly here.
+    
+    // For now, let's keep the sub-category fetching but make sure it's fresh
     const subGroups = await Promise.all(
       main.map((category) =>
         apiRequest<SubCategory[]>(`/categories/${category.id}/sub`, {
@@ -91,6 +96,14 @@ export function ReferenceDataProvider({
 
     const flattenedSubCategories = subGroups.flat()
 
+    // Update state first for immediate UI response
+    setMainCategories(main)
+    setSubCategories(flattenedSubCategories)
+    setPaymentModes(modes)
+    setMerchants(merchantList)
+    setHasStoredReferenceData(true)
+
+    // Then update storage
     writeStoredJson(REFERENCE_STORAGE_KEYS.mainCategories, main)
     writeStoredJson(
       REFERENCE_STORAGE_KEYS.subCategories,
@@ -98,12 +111,6 @@ export function ReferenceDataProvider({
     )
     writeStoredJson(REFERENCE_STORAGE_KEYS.paymentModes, modes)
     writeStoredJson(REFERENCE_STORAGE_KEYS.merchants, merchantList)
-
-    setMainCategories(main)
-    setSubCategories(flattenedSubCategories)
-    setPaymentModes(modes)
-    setMerchants(merchantList)
-    setHasStoredReferenceData(true)
   }
 
   async function refresh() {

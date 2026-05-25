@@ -198,6 +198,62 @@ app.get('/categories/:parentId/sub', auth, async (c) => {
   return c.json({ data: result.data, err: null });
 });
 
+app.post('/categories', auth, async (c) => {
+  const bodyResult = await tryCatch(c.req.json());
+  if (bodyResult.err) {
+    console.error('Invalid JSON in category creation:', bodyResult.err);
+    return errorResponse(c, 'Invalid JSON body', 400);
+  }
+
+  const { name, parentId } = bodyResult.data;
+  const normalizedName = typeof name === 'string' ? name.trim() : '';
+  const normalizedParentId =
+    parentId === null || parentId === undefined || parentId === ''
+      ? null
+      : Number(parentId);
+
+  if (!normalizedName) {
+    return errorResponse(c, 'Category name is required', 400);
+  }
+
+  if (
+    normalizedParentId !== null &&
+    (!Number.isInteger(normalizedParentId) || normalizedParentId <= 0)
+  ) {
+    return errorResponse(c, 'Valid parent category ID is required', 400);
+  }
+
+  if (normalizedParentId !== null) {
+    const parentCategoryResult = await tryCatch(
+      db.select().from(categories).where(eq(categories.id, normalizedParentId)).limit(1)
+    );
+
+    if (parentCategoryResult.err) {
+      console.error('Database error validating parent category:', parentCategoryResult.err);
+      return errorResponse(c, 'Failed to validate parent category', 500);
+    }
+
+    if (!parentCategoryResult.data?.[0]) {
+      return errorResponse(c, 'Parent category not found', 404);
+    }
+  }
+
+  const result = await tryCatch(
+    db.insert(categories).values({
+      name: normalizedName,
+      parentId: normalizedParentId,
+    }).returning()
+  );
+
+  if (result.err) {
+    console.error('Database error creating category:', result.err);
+    return errorResponse(c, 'Failed to create category', 500);
+  }
+
+  console.log('Category created successfully:', result.data[0]);
+  return c.json({ data: result.data[0], err: null });
+});
+
 // Payment Modes
 app.get('/payment-modes', auth, async (c) => {
   const result = await tryCatch(db.select().from(paymentModes));

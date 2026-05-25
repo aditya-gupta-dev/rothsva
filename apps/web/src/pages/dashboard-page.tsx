@@ -1,5 +1,3 @@
-import { useReferenceData } from '../providers/reference-data-context'
-import { Button } from '../ui/components/button'
 import { getMonthlyStats } from '../lib/api'
 import { useAuth } from '../providers/auth-context'
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from 'recharts'
@@ -13,7 +11,6 @@ interface DailyStat {
 }
 
 export function DashboardPage() {
-  const { isLoading: isRefLoading, refresh } = useReferenceData()
   const { token } = useAuth()
   const [error, setError] = useState('')
 
@@ -22,19 +19,6 @@ export function DashboardPage() {
     queryFn: () => getMonthlyStats(token!),
     enabled: !!token,
   })
-
-  async function handleRefresh() {
-    setError('')
-    try {
-      await refresh()
-    } catch (refreshError) {
-      setError(
-        refreshError instanceof Error
-          ? refreshError.message
-          : 'Unable to refresh local data.',
-      )
-    }
-  }
 
   const totalCredits = stats.reduce((acc, curr) => acc + (curr.credit || 0), 0)
   const totalDebits = stats.reduce((acc, curr) => acc + (curr.debit || 0), 0)
@@ -57,11 +41,6 @@ export function DashboardPage() {
           <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-[var(--color-heading)] sm:text-5xl">
             Finance Overview
           </h1>
-        </div>
-        <div>
-          <Button variant="secondary" onClick={handleRefresh} disabled={isRefLoading}>
-            {isRefLoading ? 'Refreshing...' : 'Refresh Local Cache'}
-          </Button>
         </div>
       </header>
 
