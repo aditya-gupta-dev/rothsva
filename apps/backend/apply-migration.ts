@@ -1,13 +1,13 @@
 import { createClient } from '@libsql/client';
-import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
+import { requireEnvironmentVariables } from './src/env';
 
-dotenv.config({ path: '../../.env' });
+const env = requireEnvironmentVariables();
 
 const client = createClient({
-  url: process.env.DATABASE_URL!,
-  authToken: process.env.DATABASE_TOKEN,
+  url: env.database_url,
+  authToken: env.database_token,
 });
 
 async function main() {

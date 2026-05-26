@@ -173,3 +173,16 @@ if these are not there in localStorage don't allow the add-entry-button work sho
 #### gemini 
 
 `Implement the following. first of all tooltip appears behind the floating action button bring it in front, at the top of each transaction item page put a dropdown like three dots with option to delete, the transaction. and also backend query to do so, in particular transaction page you show the description amongst other things in between transaction-id & type so instead of description put, sub-category field and display it, below the entire thing in a non editable text box like area show the description`
+
+
+### self-hosting backend
+
+#### gemini 
+
+`i have already some code to make sure all the env variables are loaded properly, now once frontend_url, is found allow all headers, all methods on that url. and add other things that would make this app entirely self-hostable.check everything. check also that jwt_secret is in env not in plain text. Don't start app if these variables are not present`
+
+### build fixes, setting icons, linking with backend
+
+#### gemini
+
+`here's the things that you need to do, build the web project again & again until there are no errors, then use the @photos/app-icon.jpeg and convert it to icon using ffmpeg or any other tool, then set it as icon, in api.ts file configure the backend url using env file or tell how to configure the env myself`

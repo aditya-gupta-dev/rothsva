@@ -2,7 +2,6 @@ import { getMonthlyStats } from '../lib/api'
 import { useAuth } from '../providers/auth-context'
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
 
 interface DailyStat {
   date: string
@@ -12,11 +11,10 @@ interface DailyStat {
 
 export function DashboardPage() {
   const { token } = useAuth()
-  const [error, setError] = useState('')
 
-  const { data: stats = [], isLoading } = useQuery<DailyStat[]>({
+  const { data: stats = [] as DailyStat[], isLoading } = useQuery<DailyStat[]>({
     queryKey: ['stats', 'monthly'],
-    queryFn: () => getMonthlyStats(token!),
+    queryFn: () => getMonthlyStats(token!).then((res) => res as DailyStat[]),
     enabled: !!token,
   })
 
@@ -77,9 +75,6 @@ export function DashboardPage() {
               Credits are shown in green, while debits are shown in red. 
               The area charts provide a daily view of your spending and income trends.
             </p>
-            {error ? (
-              <p className="mt-4 text-sm text-[var(--color-danger)]">{error}</p>
-            ) : null}
           </div>
 
           <div className="min-h-[22rem] rounded-[40px] border border-[var(--color-border)] bg-[var(--color-panel-subtle)] px-8 py-10 shadow-[0_24px_80px_-56px_rgba(0,0,0,0.4)] backdrop-blur-xl lg:min-h-[28rem]">

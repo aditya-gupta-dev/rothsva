@@ -1,6 +1,3 @@
-import * as dotenv from 'dotenv';
-dotenv.config({ path: '../../.env' });
-
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { jwt, sign } from 'hono/jwt';
@@ -8,12 +5,26 @@ import { db } from './src/database';
 import { users, categories, paymentModes, transactions, merchants } from './src/database/schemas';
 import { eq, and, isNull, sql } from 'drizzle-orm';
 import { tryCatch } from '@zapisi/utils';
+import { requireEnvironmentVariables } from './src/env';
 
 const app = new Hono();
+const envVars = requireEnvironmentVariables();
+const port = Number(process.env.PORT ?? 3000);
 
-app.use('*', cors());
+if (!Number.isInteger(port) || port <= 0) {
+  throw new Error('Invalid PORT environment variable');
+}
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+app.use('*', cors({ 
+  origin: envVars.frontend_url,
+  allowHeaders: ['*'],
+  allowMethods: ['GET', 'HEAD', 'PUT', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  exposeHeaders: ['*'],
+  credentials: true,
+  maxAge: 86400,
+}));
+
+const JWT_SECRET = envVars.jwt_secret;
 
 // Error helper for consistent responses
 const errorResponse = (c: any, message: string, status: number = 400) => {
@@ -476,6 +487,7 @@ app.delete('/transactions/:id', auth, async (c) => {
 });
 
 export default {
-  port: 3000,
+  hostname: '0.0.0.0',
+  port,
   fetch: app.fetch,
 };
