@@ -12,7 +12,7 @@ COPY apps/backend/ apps/backend/
 
 # Install only production dependencies
 ENV NODE_ENV=production
-RUN bun install --frozen-lockfile --production
+RUN bun install --production
 
 # Stage 2: Final lightweight image
 FROM oven/bun:1-alpine AS release
