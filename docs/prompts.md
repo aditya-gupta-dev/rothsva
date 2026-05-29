@@ -186,3 +186,10 @@ if these are not there in localStorage don't allow the add-entry-button work sho
 #### gemini
 
 `here's the things that you need to do, build the web project again & again until there are no errors, then use the @photos/app-icon.jpeg and convert it to icon using ffmpeg or any other tool, then set it as icon, in api.ts file configure the backend url using env file or tell how to configure the env myself`
+
+
+### CSV Export 
+
+#### claude
+
+`in the settings page create a export category with a simple button for csv export, that export entire data of the user in a csv and redirects them to the download link, create the csv in way such that it dont take the entire bandwidth and memory of the backend server, use optimizations technique, handle load such that multiple users can get their csv at the same time, stream the csv to the client efficiently. use the @docs/apple-design.md while designing the frontend, and the @docs/backend-overview.md while designing the backend`

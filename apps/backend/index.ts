@@ -4,11 +4,14 @@ import { jwt, sign } from 'hono/jwt';
 import { db } from './src/database';
 import { users, categories, paymentModes, transactions, merchants } from './src/database/schemas';
 import { eq, and, isNull, sql } from 'drizzle-orm';
-import { tryCatch } from '@zapisi/utils';
+import { alias } from 'drizzle-orm/sqlite-core';
+import { tryCatch } from '@rothsva/utils';
 import { requireEnvironmentVariables } from './src/env';
 
 const app = new Hono();
 const envVars = requireEnvironmentVariables();
+
+type JwtPayload = { id: number; exp: number };
 const port = Number(process.env.PORT ?? 3000);
 
 if (!Number.isInteger(port) || port <= 0) {
@@ -167,7 +170,7 @@ app.post('/auth/login', async (c) => {
 const auth = jwt({ secret: JWT_SECRET, alg: 'HS256' });
 
 app.get('/me', auth, async (c) => {
-  const payload = c.get('jwtPayload');
+  const payload = c.get('jwtPayload') as JwtPayload;
   
   const userResult = await tryCatch(
     db.select().from(users).where(eq(users.id, payload.id)).limit(1)
@@ -276,7 +279,7 @@ app.get('/payment-modes', auth, async (c) => {
 
 // Merchants
 app.get('/merchants', auth, async (c) => {
-  const payload = c.get('jwtPayload');
+  const payload = c.get('jwtPayload') as JwtPayload;
   const userId = payload.id;
 
   // Get unique merchant IDs used by this user
@@ -298,7 +301,7 @@ app.get('/merchants', auth, async (c) => {
 
 // Transactions
 app.post('/transactions', auth, async (c) => {
-  const payload = c.get('jwtPayload');
+  const payload = c.get('jwtPayload') as JwtPayload;
   const userId = payload.id;
   
   const bodyResult = await tryCatch(c.req.json());
@@ -338,7 +341,7 @@ app.post('/transactions', auth, async (c) => {
           .insert(merchants)
           .values({ name: merchantName })
           .returning();
-        finalReceiverId = newMerchant.id;
+        finalReceiverId = newMerchant!.id;
       }
     }
 
@@ -361,7 +364,7 @@ app.post('/transactions', auth, async (c) => {
 });
 
 app.get('/transactions', auth, async (c) => {
-  const payload = c.get('jwtPayload');
+  const payload = c.get('jwtPayload') as JwtPayload;
   const userId = payload.id;
 
   const result = await tryCatch(
@@ -390,7 +393,7 @@ app.get('/transactions', auth, async (c) => {
 });
 
 app.get('/transactions/:id', auth, async (c) => {
-  const payload = c.get('jwtPayload');
+  const payload = c.get('jwtPayload') as JwtPayload;
   const id = parseInt(c.req.param('id'));
 
   if (isNaN(id)) return errorResponse(c, 'Invalid transaction ID', 400);
@@ -424,7 +427,7 @@ app.get('/transactions/:id', auth, async (c) => {
 });
 
 app.get('/stats/monthly', auth, async (c) => {
-  const payload = c.get('jwtPayload');
+  const payload = c.get('jwtPayload') as JwtPayload;
   const userId = payload.id;
 
   // Get start of current month
@@ -456,10 +459,11 @@ app.get('/stats/monthly', auth, async (c) => {
     if (!dailyStats[row.date]) {
       dailyStats[row.date] = { date: row.date, credit: 0, debit: 0 };
     }
+    const entry = dailyStats[row.date]!;
     if (row.type === 'credit') {
-      dailyStats[row.date].credit = row.total;
+      entry.credit = row.total;
     } else {
-      dailyStats[row.date].debit = row.total;
+      entry.debit = row.total;
     }
   });
 
@@ -469,7 +473,7 @@ app.get('/stats/monthly', auth, async (c) => {
 });
 
 app.delete('/transactions/:id', auth, async (c) => {
-  const payload = c.get('jwtPayload');
+  const payload = c.get('jwtPayload') as JwtPayload;
   const id = parseInt(c.req.param('id'));
 
   if (isNaN(id)) return errorResponse(c, 'Invalid transaction ID', 400);
@@ -484,6 +488,136 @@ app.delete('/transactions/:id', auth, async (c) => {
   if (!result.data?.[0]) return errorResponse(c, 'Transaction not found or unauthorized', 404);
 
   return c.json({ data: { message: 'Transaction deleted successfully' }, err: null });
+});
+
+// --- CSV Export ---
+
+/** Escape a value for safe inclusion in a CSV cell. */
+const escapeCSV = (value: unknown): string => {
+  if (value === null || value === undefined || value === '') return 'NULL';
+  const str = String(value);
+  // Wrap in double-quotes if the value contains special CSV characters
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+};
+
+app.get('/export/csv', auth, async (c) => {
+  const payload = c.get('jwtPayload') as JwtPayload;
+  const userId = payload.id;
+  const BATCH_SIZE = 500;
+
+  // Self-join alias so we can resolve parent category names
+  const parentCategories = alias(categories, 'parent_categories');
+
+  const encoder = new TextEncoder();
+  const CSV_HEADER =
+    'ID,Type,Amount,Currency,Payment Mode,Category,Sub-category,Merchant,Description,Official Txn ID,Date,Updated At\n';
+
+  // Cursor tracks the last id we returned so the next batch starts after it
+  let cursor = 0;
+
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(CSV_HEADER));
+    },
+
+    async pull(controller) {
+      const batchResult = await tryCatch(
+        db
+          .select({
+            id: transactions.id,
+            transactionType: transactions.transactionType,
+            amount: transactions.amount,
+            currency: transactions.currency,
+            paymentMode: paymentModes.name,
+            categoryName: categories.name,
+            categoryParentId: categories.parentId,
+            parentCategoryName: parentCategories.name,
+            merchantName: merchants.name,
+            description: transactions.description,
+            officialTxnId: transactions.officialTxnId,
+            createdAt: transactions.createdAt,
+            updatedAt: transactions.updatedAt,
+          })
+          .from(transactions)
+          .leftJoin(merchants, eq(transactions.receiverId, merchants.id))
+          .leftJoin(categories, eq(transactions.categoryId, categories.id))
+          .leftJoin(parentCategories, eq(categories.parentId, parentCategories.id))
+          .leftJoin(paymentModes, eq(transactions.paymentModeId, paymentModes.id))
+          .where(
+            and(
+              eq(transactions.userId, userId),
+              sql`${transactions.id} > ${cursor}`,
+            ),
+          )
+          .orderBy(sql`${transactions.id} ASC`)
+          .limit(BATCH_SIZE),
+      );
+
+      // On DB error, abort the stream so the client sees a broken download
+      if (batchResult.err) {
+        controller.error(batchResult.err);
+        return;
+      }
+
+      const rows = batchResult.data;
+
+      // No more rows — we're done
+      if (rows.length === 0) {
+        controller.close();
+        return;
+      }
+
+      // Build a single string for the entire batch to minimise enqueue calls
+      let chunk = '';
+      for (const row of rows) {
+        // Determine main category vs sub-category:
+        //   - If parentId exists the row's category is a sub-category
+        //   - The parent's name becomes the main "Category" column
+        const mainCategory = row.categoryParentId
+          ? row.parentCategoryName
+          : row.categoryName;
+        const subCategory = row.categoryParentId ? row.categoryName : '';
+
+        chunk += [
+          escapeCSV(row.id),
+          escapeCSV(row.transactionType),
+          escapeCSV(row.amount),
+          escapeCSV(row.currency),
+          escapeCSV(row.paymentMode),
+          escapeCSV(mainCategory),
+          escapeCSV(subCategory),
+          escapeCSV(row.merchantName),
+          escapeCSV(row.description),
+          escapeCSV(row.officialTxnId),
+          escapeCSV(row.createdAt),
+          escapeCSV(row.updatedAt),
+        ].join(',') + '\n';
+      }
+
+      controller.enqueue(encoder.encode(chunk));
+
+      // Advance cursor to the last id in this batch
+      cursor = rows[rows.length - 1]!.id;
+
+      // If we got fewer rows than BATCH_SIZE we've exhausted the data
+      if (rows.length < BATCH_SIZE) {
+        controller.close();
+      }
+    },
+  });
+
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/csv',
+      'Content-Disposition': `attachment; filename="rothsva-export-${today}.csv"`,
+      'Transfer-Encoding': 'chunked',
+    },
+  });
 });
 
 export default {

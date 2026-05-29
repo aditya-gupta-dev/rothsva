@@ -4,8 +4,8 @@ import { useFabPosition } from '../providers/fab-position-context'
 import { useReferenceData } from '../providers/reference-data-context'
 import { Button } from '../ui/components/button'
 import { Card } from '../ui/components/card'
-import { createCategory } from '../lib/api'
-import { Plus, Tag, Layers } from 'lucide-react'
+import { createCategory, API_URL } from '../lib/api'
+import { Plus, Tag, Layers, Download } from 'lucide-react'
 
 export function SettingsPage() {
   const { logout, user, token } = useAuth()
@@ -19,6 +19,7 @@ export function SettingsPage() {
   const [newSubName, setNewSubName] = useState('')
   const [selectedParentId, setSelectedParentId] = useState('')
   const [isAddingSub, setIsAddingSub] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
 
   async function handleRefresh() {
     try {
@@ -83,6 +84,36 @@ export function SettingsPage() {
       alert(err instanceof Error ? err.message : 'Failed to add sub-category.')
     } finally {
       setIsAddingSub(false)
+    }
+  }
+
+  async function handleExport() {
+    if (!token) {
+      alert('You must be logged in to export data.')
+      return
+    }
+    setIsExporting(true)
+    try {
+      const response = await fetch(`${API_URL}/export/csv`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null)
+        throw new Error(errData?.err || 'Export failed')
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `rothsva-export-${new Date().toISOString().slice(0, 10)}.csv`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Export failed.')
+    } finally {
+      setIsExporting(false)
     }
   }
 
@@ -255,6 +286,34 @@ export function SettingsPage() {
               </div>
             ))}
           </div>
+        </Card>
+      </div>
+
+      {/* Export Data */}
+      <div className="space-y-6">
+        <header>
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--color-muted)]">
+            Your Data
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
+            Export
+          </h2>
+        </header>
+
+        <Card className="rounded-[36px] p-6 sm:p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-xl bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400">
+              <Download size={20} />
+            </div>
+            <h3 className="text-lg font-semibold text-[var(--color-heading)]">Export Transactions</h3>
+          </div>
+          <p className="text-sm leading-relaxed text-[var(--color-muted)] mb-6">
+            Download all your transaction data as a CSV file. The export includes transaction type, amount, category, merchant, and more.
+          </p>
+          <Button variant="primary" onClick={handleExport} disabled={isExporting}>
+            <Download size={18} className="mr-2" />
+            {isExporting ? 'Exporting...' : 'Export as CSV'}
+          </Button>
         </Card>
       </div>
     </section>

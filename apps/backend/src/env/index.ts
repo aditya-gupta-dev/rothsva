@@ -1,4 +1,4 @@
-import type { Result } from "@zapisi/utils";
+import type { Result } from "@rothsva/utils";
 import * as dotenv from 'dotenv';
 
 const DEFAULT_ENV_PATH = '../../.env';

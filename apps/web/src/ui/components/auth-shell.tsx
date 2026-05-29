@@ -22,7 +22,7 @@ export function AuthShell({
         <header className="flex items-center justify-between gap-4 py-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-muted)]">
-              Zapisi
+              Rothsva
             </p>
             <p className="mt-2 text-sm text-[var(--color-muted)]">
               Secure notes, minimal chrome.

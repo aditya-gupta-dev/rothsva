@@ -21,10 +21,10 @@ export type Merchant = {
 }
 
 export const REFERENCE_STORAGE_KEYS = {
-  mainCategories: 'zapisi.reference.main-categories',
-  subCategories: 'zapisi.reference.sub-categories',
-  paymentModes: 'zapisi.reference.payment-modes',
-  merchants: 'zapisi.reference.merchants',
+  mainCategories: 'rothsva.reference.main-categories',
+  subCategories: 'rothsva.reference.sub-categories',
+  paymentModes: 'rothsva.reference.payment-modes',
+  merchants: 'rothsva.reference.merchants',
 } as const
 
 export function readStoredJson<T>(key: string): T | null {

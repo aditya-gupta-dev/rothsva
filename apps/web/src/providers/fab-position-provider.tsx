@@ -5,7 +5,7 @@ import {
   type FabPositionContextValue,
 } from './fab-position-context'
 
-const STORAGE_KEY = 'zapisi.fab-position'
+const STORAGE_KEY = 'rothsva.fab-position'
 
 function getStoredPosition(): FabPosition {
   const value = window.localStorage.getItem(STORAGE_KEY)

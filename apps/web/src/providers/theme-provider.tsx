@@ -11,7 +11,7 @@ import {
   type ThemePreference,
 } from './theme-context'
 
-const STORAGE_KEY = 'zapisi.theme'
+const STORAGE_KEY = 'rothsva.theme'
 
 function getSystemTheme(): Theme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches

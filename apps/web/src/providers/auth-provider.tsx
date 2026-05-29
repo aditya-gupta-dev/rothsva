@@ -7,7 +7,7 @@ import { apiRequest } from '../lib/api'
 import type { LoginData, MeData, RegisterData } from '../lib/auth'
 import { AuthContext, type AuthContextValue } from './auth-context'
 
-const STORAGE_KEY = 'zapisi.auth-token'
+const STORAGE_KEY = 'rothsva.auth-token'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() =>

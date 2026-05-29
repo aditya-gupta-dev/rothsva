@@ -47,7 +47,7 @@ export function LoginPage() {
     <AuthShell
       eyebrow="Personal Finance"
       title="Stay on top of every expense, balance, and monthly record."
-      description="Zapisi is your personal financial record manager. Track everyday spending, keep your numbers organized, and return to the same dashboard automatically when your session is still valid."
+      description="Rothsva is your personal financial record manager. Track everyday spending, keep your numbers organized, and return to the same dashboard automatically when your session is still valid."
       features={[
         { label: 'Expense Logs', value: 'Daily' },
         { label: 'Monthly View', value: 'Structured' },
@@ -111,7 +111,7 @@ export function LoginPage() {
             </Button>
           </div>
           <div className="pt-1 text-center text-sm text-[var(--color-muted)]">
-            New to Zapisi?{' '}
+            New to Rothsva?{' '}
             <Link
               className="font-semibold text-[var(--color-accent)] transition hover:text-[#0066cc]"
               to="/signup"
