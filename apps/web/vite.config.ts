@@ -11,7 +11,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.png', 'pwa-icon.svg', 'screenshot-mobile.png', 'screenshot-wide.png'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'screenshot-mobile.png', 'screenshot-wide.png'],
       manifest: {
         name: 'Rothsva',
         short_name: 'Rothsva',
@@ -22,21 +22,21 @@ export default defineConfig({
         icons: [
           {
             src: '/favicon.png',
-            sizes: '256x256',
+            sizes: '32x32',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/pwa-icon.svg',
-            sizes: '192x192 512x512',
-            type: 'image/svg+xml',
-            purpose: 'any'
+            src: '/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
-            src: '/pwa-icon.svg',
-            sizes: '192x192 512x512',
-            type: 'image/svg+xml',
-            purpose: 'maskable'
+            src: '/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ],
         screenshots: [
