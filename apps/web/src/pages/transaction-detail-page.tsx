@@ -16,6 +16,7 @@ interface TransactionDetail {
   updatedAt: string
   merchantName: string | null
   categoryName: string | null
+  subCategoryName: string | null
   paymentModeName: string | null
 }
 
@@ -175,7 +176,7 @@ export function TransactionDetailPage() {
             <DetailItem
               icon={<Tag size={18} />}
               label="Sub-category"
-              value={transaction.categoryName || 'None'}
+              value={transaction.subCategoryName || 'None'}
             />
             <DetailItem
               icon={<ArrowUpRight size={18} />}
