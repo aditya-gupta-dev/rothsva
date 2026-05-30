@@ -26,6 +26,7 @@ type RecordDraft = {
   mainCategoryId: string
   subCategoryId: string
   description: string
+  officialTxnId: string
 }
 
 export function FloatingActionButton() {
@@ -43,6 +44,7 @@ export function FloatingActionButton() {
     mainCategoryId: '',
     subCategoryId: '',
     description: '',
+    officialTxnId: '',
   })
   const { token } = useAuth()
   const { position } = useFabPosition()
@@ -165,6 +167,7 @@ export function FloatingActionButton() {
               ? Number(draft.mainCategoryId)
               : undefined,
           description: draft.description || undefined,
+          officialTxnId: draft.officialTxnId.trim() || undefined,
         }),
       })
 
@@ -181,6 +184,7 @@ export function FloatingActionButton() {
         mainCategoryId: '',
         subCategoryId: '',
         description: '',
+        officialTxnId: '',
       })
       setIsOpen(false)
       setIsMerchantDropdownOpen(false)
@@ -418,6 +422,18 @@ export function FloatingActionButton() {
                       ))}
                     </SelectField>
                   ) : null}
+
+                  <label className="flex flex-col gap-2 text-left">
+                    <span className="text-sm font-medium text-[var(--color-text)]">
+                      Official Txn ID
+                    </span>
+                    <input
+                      value={draft.officialTxnId}
+                      onChange={(event) => updateDraft('officialTxnId', event)}
+                      placeholder="e.g. UPI ref / bank txn ID"
+                      className="min-h-12 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-input)] px-4 text-base text-[var(--color-text)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[color:rgba(0,113,227,0.14)]"
+                    />
+                  </label>
 
                   <TextareaField
                     label="Description"

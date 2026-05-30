@@ -193,3 +193,9 @@ if these are not there in localStorage don't allow the add-entry-button work sho
 #### claude
 
 `in the settings page create a export category with a simple button for csv export, that export entire data of the user in a csv and redirects them to the download link, create the csv in way such that it dont take the entire bandwidth and memory of the backend server, use optimizations technique, handle load such that multiple users can get their csv at the same time, stream the csv to the client efficiently. use the @docs/apple-design.md while designing the frontend, and the @docs/backend-overview.md while designing the backend`
+
+### Post Deployment Bug Fixes 
+
+#### gemini - Claude Opus 4.6 
+
+`There are few bugs u need to fix. there is no field in the for entering the official transaction id in the frontend, create an field to enter that if left empty then transaction-id is null in sqlite, make sure the changes in the form is responsive. Follow the @docs/apple-design.md`
