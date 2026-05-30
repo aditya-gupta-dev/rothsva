@@ -367,8 +367,6 @@ app.get('/transactions', auth, async (c) => {
   const payload = c.get('jwtPayload') as JwtPayload;
   const userId = payload.id;
 
-  const parentCats = alias(categories, 'parent_cats');
-
   const result = await tryCatch(
     db.select({
       id: transactions.id,
@@ -378,14 +376,14 @@ app.get('/transactions', auth, async (c) => {
       description: transactions.description,
       createdAt: transactions.createdAt,
       merchantName: merchants.name,
+      categoryId: categories.id,
       categoryName: categories.name,
-      parentCategoryName: parentCats.name,
+      categoryParentId: categories.parentId,
       paymentModeName: paymentModes.name,
     })
     .from(transactions)
     .leftJoin(merchants, eq(transactions.receiverId, merchants.id))
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
-    .leftJoin(parentCats, eq(categories.parentId, parentCats.id))
     .leftJoin(paymentModes, eq(transactions.paymentModeId, paymentModes.id))
     .where(eq(transactions.userId, userId))
     .orderBy(sql`${transactions.createdAt} DESC`)
@@ -393,7 +391,25 @@ app.get('/transactions', auth, async (c) => {
 
   if (result.err) return errorResponse(c, 'Failed to fetch transactions', 500);
 
-  // Resolve: if parentCategoryName exists, category is the parent and sub is the child
+  // Collect parent category IDs that need resolving
+  const parentIds = [...new Set(
+    result.data
+      .map((r) => r.categoryParentId)
+      .filter((pid): pid is number => pid !== null)
+  )];
+
+  // Batch-fetch parent category names
+  let parentMap: Record<number, string> = {};
+  if (parentIds.length > 0) {
+    const parents = await db
+      .select({ id: categories.id, name: categories.name })
+      .from(categories)
+      .where(sql`${categories.id} IN (${sql.join(parentIds.map(id => sql`${id}`), sql`, `)})`);
+    for (const p of parents) {
+      parentMap[p.id] = p.name;
+    }
+  }
+
   const data = result.data.map((row) => ({
     id: row.id,
     amount: row.amount,
@@ -402,8 +418,8 @@ app.get('/transactions', auth, async (c) => {
     description: row.description,
     createdAt: row.createdAt,
     merchantName: row.merchantName,
-    categoryName: row.parentCategoryName ?? row.categoryName,
-    subCategoryName: row.parentCategoryName ? row.categoryName : null,
+    categoryName: row.categoryParentId ? (parentMap[row.categoryParentId] ?? null) : row.categoryName,
+    subCategoryName: row.categoryParentId ? row.categoryName : null,
     paymentModeName: row.paymentModeName,
   }));
 
@@ -415,8 +431,6 @@ app.get('/transactions/:id', auth, async (c) => {
   const id = parseInt(c.req.param('id'));
 
   if (isNaN(id)) return errorResponse(c, 'Invalid transaction ID', 400);
-
-  const parentCats = alias(categories, 'parent_cats_detail');
 
   const result = await tryCatch(
     db.select({
@@ -430,13 +444,12 @@ app.get('/transactions/:id', auth, async (c) => {
       updatedAt: transactions.updatedAt,
       merchantName: merchants.name,
       categoryName: categories.name,
-      parentCategoryName: parentCats.name,
+      categoryParentId: categories.parentId,
       paymentModeName: paymentModes.name,
     })
     .from(transactions)
     .leftJoin(merchants, eq(transactions.receiverId, merchants.id))
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
-    .leftJoin(parentCats, eq(categories.parentId, parentCats.id))
     .leftJoin(paymentModes, eq(transactions.paymentModeId, paymentModes.id))
     .where(and(eq(transactions.id, id), eq(transactions.userId, payload.id)))
     .limit(1)
@@ -446,6 +459,21 @@ app.get('/transactions/:id', auth, async (c) => {
   if (!result.data?.[0]) return errorResponse(c, 'Transaction not found', 404);
 
   const row = result.data[0];
+
+  // If category has a parent, resolve the parent name
+  let categoryName = row.categoryName;
+  let subCategoryName: string | null = null;
+
+  if (row.categoryParentId) {
+    const [parent] = await db
+      .select({ name: categories.name })
+      .from(categories)
+      .where(eq(categories.id, row.categoryParentId))
+      .limit(1);
+    categoryName = parent?.name ?? null;
+    subCategoryName = row.categoryName;
+  }
+
   const data = {
     id: row.id,
     amount: row.amount,
@@ -456,8 +484,8 @@ app.get('/transactions/:id', auth, async (c) => {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     merchantName: row.merchantName,
-    categoryName: row.parentCategoryName ?? row.categoryName,
-    subCategoryName: row.parentCategoryName ? row.categoryName : null,
+    categoryName,
+    subCategoryName,
     paymentModeName: row.paymentModeName,
   };
 
